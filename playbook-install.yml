@@ -85,7 +85,7 @@
       source .venv/bin/activate
       export DJANGO_SETTINGS_MODULE=settings.config
       python manage.py migrate --noinput || exit -1
-      export CELERY_ENABLED=False python manage.py createsuperuser
+      echo "from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(is_superuser=True).exists() or User.objects.create_superuser('{{admin_user}}', '{{admin_email}}', '{{admin_password}}')" | python manage.py shell
       python manage.py loaddata initial_project_templates || exit -1
       python manage.py compilemessages || exit -1
       python manage.py collectstatic --noinput || exit -1

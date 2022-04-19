@@ -8,4 +8,7 @@ taiga:
       user: taiga
       password: testpassw0rd_changeme
 
+      admin_user: admin
+      admin_email: admin@example.org
+      admin_password: topsecret
       secretkey: RANDOMSECRET
