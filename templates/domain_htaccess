@@ -1,0 +1,4 @@
+PassengerFriendlyErrorPages off
+PassengerPython /home/pacs/{{pac}}/users/{{user}}/taiga-back/.venv/bin/python3
+SetEnv PYTHONPATH /home/pacs/{{pac}}/users/{{user}}/taiga-back
+SetEnv DJANGO_SETTINGS_MODULE settings.config

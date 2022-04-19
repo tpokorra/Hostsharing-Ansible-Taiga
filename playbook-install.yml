@@ -1,0 +1,184 @@
+---
+- hosts: taiga
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    # see https://docs.ansible.com/ansible/latest/user_guide/become.html#risks-of-becoming-an-unprivileged-user
+    ansible_common_remote_group: "{{pac}}"
+    ansible_remote_tmp: ~/.ansible/tmp
+
+  tasks:
+  - name: Create user, domain and database
+    import_tasks: tasks/hs_basis.yml
+
+  #################################
+  ## create directories
+  #################################
+  - name: create directory media
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/data/media"
+      state: directory
+  - name: create directory static
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/data/static"
+      state: directory
+
+  ##################################
+  ## install Taiga Server
+  ##################################
+  - name: Check for git working tree
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    stat:
+      path: /home/pacs/{{pac}}/users/{{user}}/taiga-back
+    register: workingtreeback
+  - name: get taiga server repo
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    git:
+      repo: https://github.com/taigaio/taiga-back.git
+      dest: /home/pacs/{{pac}}/users/{{user}}/taiga-back
+      version: stable
+    when: not workingtreeback.stat.exists
+
+  - name: create venv
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    command: python3 -m venv .venv chdir="/home/pacs/{{pac}}/users/{{user}}/taiga-back"
+    args:
+      creates: "/home/pacs/{{pac}}/users/{{user}}/taiga-back/.venv"
+
+  - name: install pip packages
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      source .venv/bin/activate
+      pip install --upgrade pip wheel || exit -1
+      pip install -r requirements.txt || exit -1
+      pip install git+https://github.com/taigaio/taiga-contrib-protected.git@6.0.0#egg=taiga-contrib-protected || exit -1
+      touch /home/pacs/{{pac}}/users/{{user}}/.ansible_pip_installed
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/taiga-back"
+      creates: "/home/pacs/{{pac}}/users/{{user}}/.ansible_pip_installed"
+
+  ##################################
+  ## configuration
+  ##################################
+  - name: upload configuration file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template:
+      src: "templates/config.py"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/taiga-back/settings/config.py"
+
+  ######################
+  ## initialise instance
+  ######################
+  - name: initialise instance
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      source .venv/bin/activate
+      export DJANGO_SETTINGS_MODULE=settings.config
+      python manage.py migrate --noinput || exit -1
+      export CELERY_ENABLED=False python manage.py createsuperuser
+      python manage.py loaddata initial_project_templates || exit -1
+      python manage.py compilemessages || exit -1
+      python manage.py collectstatic --noinput || exit -1
+      touch "/home/pacs/{{pac}}/users/{{user}}/.ansible_instance_initialised"
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/taiga-back"
+      creates: "/home/pacs/{{pac}}/users/{{user}}/.ansible_instance_initialised"
+
+  ##################################
+  ## install frontend
+  ##################################
+  - name: Check for git working tree
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    stat:
+      path: /home/pacs/{{pac}}/users/{{user}}/taiga-front-dist
+    register: workingtreeclient
+  - name: get repo
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    git:
+      repo: https://github.com/taigaio/taiga-front-dist.git
+      dest: /home/pacs/{{pac}}/users/{{user}}/taiga-front-dist
+      version: stable
+    when: not workingtreeclient.stat.exists
+
+  - name: upload frontend config file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template:
+      src: "templates/conf.json"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/taiga-front-dist/dist/conf.json"
+
+  ########################
+  ## setup the apache site
+  ########################
+  - name: check for htdocs-ssl directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    stat:
+      path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+    register: htdocs_exists
+
+  - name: drop htdocs-ssl directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+      state: absent
+    when: htdocs_exists.stat.islnk is defined and htdocs_exists.stat.islnk == False
+
+  - name: create symbolic link for client
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      src: "/home/pacs/{{pac}}/users/{{user}}/taiga-front-dist/dist"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+      state: link
+
+  - name: create symbolic link for media
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      src: "/home/pacs/{{pac}}/users/{{user}}/data/media"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl/media"
+      state: link
+
+  - name: create symbolic link for static
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      src: "/home/pacs/{{pac}}/users/{{user}}/data/static"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl/static"
+      state: link
+
+  - name: upload .htaccess file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template:
+      src: "templates/htaccess"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/.htaccess"
+
+  - name: upload domain htaccess file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template:
+      src: "templates/domain_htaccess"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/.htaccess"
+
+  - name: upload passenger wsgi file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template:
+      src: "templates/passenger_wsgi.py"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/app-ssl/passenger_wsgi.py"

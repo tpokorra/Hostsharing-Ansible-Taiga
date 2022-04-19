@@ -1,0 +1,11 @@
+taiga:
+  hosts:
+    xyz00-taiga:
+      ansible_ssh_host: xyz00.hostsharing.net
+      ansible_ssh_user: xyz00
+      pac: xyz00
+      domain: taiga.example.org
+      user: taiga
+      password: testpassw0rd_changeme
+
+      secretkey: RANDOMSECRET
