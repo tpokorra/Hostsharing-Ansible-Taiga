@@ -8,7 +8,11 @@ taiga:
       user: taiga
       password: testpassw0rd_changeme
 
+      # for the login at https://taiga.example.org/admin/
       admin_user: admin
       admin_email: admin@example.org
       admin_password: topsecret
+
       secretkey: RANDOMSECRET
+
+      allowedDomains: example.org

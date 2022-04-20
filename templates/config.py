@@ -47,4 +47,5 @@ CELERY_ENABLED = False
 from kombu import Queue  # noqa
 
 ENABLE_TELEMETRY = False
-PUBLIC_REGISTER_ENABLED = False
+PUBLIC_REGISTER_ENABLED = True
+USER_EMAIL_ALLOWED_DOMAINS = "{{allowedDomains}}"
