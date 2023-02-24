@@ -13,6 +13,12 @@
   #################################
   ## create directories
   #################################
+  - name: create directory bin
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/bin"
+      state: directory
   - name: create directory media
     become: yes
     become_user: "{{pac}}-{{user}}"
@@ -74,6 +80,13 @@
     template:
       src: "templates/config.py"
       dest: "/home/pacs/{{pac}}/users/{{user}}/taiga-back/settings/config.py"
+  - name: upload restart script
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template:
+      src: "templates/restart.sh"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/bin/restart.sh"
+      mode: '0744'
 
   ######################
   ## initialise instance
