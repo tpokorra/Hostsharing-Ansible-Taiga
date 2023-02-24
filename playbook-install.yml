@@ -167,7 +167,7 @@
     become_user: "{{pac}}-{{user}}"
     template:
       src: "templates/htaccess"
-      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/.htaccess"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl/.htaccess"
 
   - name: upload domain htaccess file
     become: yes
