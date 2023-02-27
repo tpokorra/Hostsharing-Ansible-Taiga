@@ -195,3 +195,14 @@
     template:
       src: "templates/passenger_wsgi.py"
       dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/app-ssl/passenger_wsgi.py"
+
+  ####################################
+  ## install cron jobs
+  ####################################
+  - name: run notification cronjob
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    cron:
+      name: "taiga_notifications"
+      minute: "*/2"
+      job: "cd $HOME/taiga-back && .venv/bin/python3 manage.py send_notifications --settings=settings.config"
