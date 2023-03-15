@@ -45,9 +45,9 @@
     become: yes
     become_user: "{{pac}}-{{user}}"
     git:
-      repo: https://github.com/taigaio/taiga-back.git
+      repo: https://github.com/kaleidos-ventures/taiga-back.git
       dest: /home/pacs/{{pac}}/users/{{user}}/taiga-back
-      version: stable
+      version: "{{taiga_version}}"
     when: not workingtreeback.stat.exists
 
   - name: create venv
@@ -64,7 +64,7 @@
       source .venv/bin/activate
       pip install --upgrade pip wheel || exit -1
       pip install -r requirements.txt || exit -1
-      pip install git+https://github.com/taigaio/taiga-contrib-protected.git@6.0.0#egg=taiga-contrib-protected || exit -1
+      pip install git+https://github.com/kaleidos-ventures/taiga-contrib-protected.git@{{taiga_contrib_version}}#egg=taiga-contrib-protected
       touch /home/pacs/{{pac}}/users/{{user}}/.ansible_pip_installed
     args:
       executable: /bin/bash
@@ -87,6 +87,13 @@
       src: "templates/restart.sh"
       dest: "/home/pacs/{{pac}}/users/{{user}}/bin/restart.sh"
       mode: '0744'
+  - name: Upload pgpass file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template:
+      src: "templates/pgpass"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/.pgpass"
+      mode: "600"
 
   ######################
   ## initialise instance
@@ -121,9 +128,9 @@
     become: yes
     become_user: "{{pac}}-{{user}}"
     git:
-      repo: https://github.com/taigaio/taiga-front-dist.git
+      repo: https://github.com/kaleidos-ventures/taiga-front-dist.git
       dest: /home/pacs/{{pac}}/users/{{user}}/taiga-front-dist
-      version: stable
+      version: "{{taiga_version}}"
     when: not workingtreeclient.stat.exists
 
   - name: upload frontend config file

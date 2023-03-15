@@ -8,6 +8,10 @@ taiga:
       user: taiga
       password: testpassw0rd_changeme
 
+      dbname: taiga
+      dbuser: taiga
+      dbpassword: testpassw0rd_changeme
+
       # for the login at https://taiga.example.org/admin/
       admin_user: admin
       admin_email: admin@example.org
@@ -16,3 +20,9 @@ taiga:
       secretkey: RANDOMSECRET
 
       allowedDomains: example.org
+
+      # see https://github.com/kaleidos-ventures/taiga-back/tags
+      # and https://github.com/kaleidos-ventures/taiga-front-dist/tags
+      taiga_version: "6.5.2"
+      # see https://github.com/kaleidos-ventures/taiga-contrib-protected/tags
+      taiga_contrib_version: "6.5.0"
