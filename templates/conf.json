@@ -10,7 +10,7 @@
     "themes": ["taiga"],
     "defaultTheme": "taiga",
     "defaultLoginEnabled": true,
-    "publicRegisterEnabled": true,
+    "publicRegisterEnabled": false,
     "feedbackEnabled": true,
     "supportUrl": "https://resources.taiga.io",
     "privacyPolicyUrl": null,
