@@ -1,0 +1,31 @@
+taiga:
+  hosts:
+    {{pac}}:
+      ansible_ssh_host: {{pac}}.hostsharing.net
+      ansible_ssh_user: {{pac}}
+      pac: {{pac}}
+      domain: {{domain}}
+      user: {{username}}
+      password: {{password}}
+
+      dbname: {{username}}
+      dbuser: {{username}}
+      dbpassword: {{password}}
+
+      # for the login at https://taiga.example.org/admin/
+      admin_user: tg_admin
+      admin_email: admin@example.org
+      admin_password: {{initial_password}}
+
+      secretkey: {{Random32DigitsLetters1}}
+
+      allowedDomains: {{domain}}
+
+      # see https://github.com/kaleidos-ventures/taiga-back/tags
+      # and https://github.com/kaleidos-ventures/taiga-front-dist/tags
+      taiga_version: "6.5.2"
+      # see https://github.com/kaleidos-ventures/taiga-contrib-protected/tags
+      taiga_contrib_version: "6.5.0"
+
+      SaasActivationPassword: {{SaasActivationPassword}}
+      SaasInstanceStatus: {{SaasInstanceStatus}}
