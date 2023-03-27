@@ -1,0 +1,47 @@
+---
+- hosts: taiga
+  become_user: "{{pac}}-{{user}}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    # see https://docs.ansible.com/ansible/latest/user_guide/become.html#risks-of-becoming-an-unprivileged-user
+    ansible_common_remote_group: "{{pac}}"
+    ansible_remote_tmp: ~/.ansible/tmp
+
+  tasks:
+  - name: update taiga server repo
+    become: yes
+    git:
+      repo: https://github.com/kaleidos-ventures/taiga-back.git
+      dest: /home/pacs/{{pac}}/users/{{user}}/taiga-back
+      version: "{{taiga_version}}"
+
+  - name: install pip packages
+    become: yes
+    shell: |
+      source .venv/bin/activate
+      pip install --upgrade pip wheel || exit -1
+      pip install -r requirements.txt || exit -1
+      pip install git+https://github.com/kaleidos-ventures/taiga-contrib-protected.git@{{taiga_contrib_version}}#egg=taiga-contrib-protected
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/taiga-back"
+
+  - name: upgrade instance
+    become: yes
+    shell: |
+      source .venv/bin/activate
+      export DJANGO_SETTINGS_MODULE=settings.config
+      python manage.py migrate --noinput || exit -1
+      python manage.py compilemessages || exit -1
+      python manage.py collectstatic --noinput || exit -1
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/taiga-back"
+
+  - name: update client repo
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    git:
+      repo: https://github.com/kaleidos-ventures/taiga-front-dist.git
+      dest: /home/pacs/{{pac}}/users/{{user}}/taiga-front-dist
+      version: "{{taiga_version}}"
