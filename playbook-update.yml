@@ -40,8 +40,16 @@
 
   - name: update client repo
     become: yes
-    become_user: "{{pac}}-{{user}}"
     git:
       repo: https://github.com/kaleidos-ventures/taiga-front-dist.git
       dest: /home/pacs/{{pac}}/users/{{user}}/taiga-front-dist
       version: "{{taiga_version}}"
+
+  - name: restart the python service
+    become: yes
+    shell: |
+        $HOME/bin/restart.sh
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}"
+
